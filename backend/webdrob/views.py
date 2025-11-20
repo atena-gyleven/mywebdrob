@@ -8,6 +8,9 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from .serializers import RegisterSerializer
 
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+
 from .models import (
     Prenda, Etiqueta, PrendaEtiqueta,
     Look, LookItem, CalendarioEvento,
@@ -104,6 +107,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 class PrendaViewSet(viewsets.ModelViewSet):
     serializer_class = PrendaSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['categoria', 'color', 'estilo', 'temporada']
+    search_fields = ['color', 'estilo', 'temporada']
+    ordering_fields = ['created_at', 'categoria', 'color']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         # Evitar errores cuando Swagger genera el esquema (no hay usuario real)
@@ -172,6 +180,10 @@ class LookViewSet(viewsets.ModelViewSet):
 class CalendarioEventoViewSet(viewsets.ModelViewSet):
     serializer_class = CalendarioEventoSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['fecha', 'look']
+    ordering_fields = ['fecha']
+    ordering = ['fecha']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -191,6 +203,11 @@ class CalendarioEventoViewSet(viewsets.ModelViewSet):
 class ComentarioViewSet(viewsets.ModelViewSet):
     serializer_class = ComentarioSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['look', 'usuario']
+    search_fields = ['texto']
+    ordering_fields = ['fecha']
+    ordering = ['-fecha']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -211,6 +228,10 @@ class ComentarioViewSet(viewsets.ModelViewSet):
 class VotoViewSet(viewsets.ModelViewSet):
     serializer_class = VotoSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['look', 'usuario', 'valor']
+    ordering_fields = ['fecha', 'valor']
+    ordering = ['-fecha']
 
     def get_queryset(self):
         look_id = self.request.query_params.get('look')
@@ -229,6 +250,10 @@ class VotoViewSet(viewsets.ModelViewSet):
 class RecomendacionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = RecomendacionSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['look']
+    ordering_fields = ['fecha', 'score']
+    ordering = ['-score']
 
     def get_queryset(self):
         return Recomendacion.objects.filter(usuario=self.request.user).order_by('-fecha')
